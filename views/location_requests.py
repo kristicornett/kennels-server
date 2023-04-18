@@ -1,3 +1,8 @@
+import sqlite3
+import json
+from .models import Location
+
+
 LOCATIONS = [
     {
         "id": 1,
@@ -14,24 +19,64 @@ LOCATIONS = [
 ]
 
 def get_all_locations():
-    """all locations"""
-    return LOCATIONS
+    '''single location'''
+    #open connection to database
+    with sqlite3.connect('kennel.sqlite3') as conn:
+        #use these it's a black box
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
+
+        #write sql query to get info
+        db_cursor.execute('''
+        SELECT
+            l.id,  
+            l.name,
+            l.address
+        FROM location l
+        ''')
+
+        #initalize an empty list to hold on location representations
+        locations = []
+
+        #convert rows of data into python list
+        dataset = db_cursor.fetchall()
+
+
+        #iterate list of data returned from database
+        for row in dataset:
+        
+            #create a location instance from the current row.
+            #note database fields are specified in order of parameters defined in location class
+            location = Location(row['id'], row['name'], row['address'])
+            locations.append(location.__dict__)
+            
+    return locations
 
 # Function with a single parameter
 def get_single_location(id):
-    """single location"""
-    # Variable to hold the found animal, if it exists
-    requested_location = None
+    '''single employee with sql'''
+    with sqlite3.connect("kennel.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-    # Iterate the ANIMALS list above. Very similar to the
-    # for..of loops you used in JavaScript.
-    for location in LOCATIONS:
-        # Dictionaries in Python use [] notation to find a key
-        # instead of the dot notation that JavaScript used.
-        if location["id"] == id:
-            requested_location = location
+        # Use a ? parameter to inject a variable's value
+        # into the SQL statement.
+        db_cursor.execute("""
+        SELECT
+            l.id,  
+            l.name,
+            l.address
+        FROM location l
+        WHERE l.id = ?
+        """, ( id, ))
 
-    return requested_location
+        # Load the single result into memory
+        data = db_cursor.fetchone()
+
+        # Create an animal instance from the current row
+        location = Location(data['id'], data['name'], data['address'])
+
+        return location.__dict__
 
 def create_location(location):
     """post location"""

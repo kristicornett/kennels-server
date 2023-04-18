@@ -1,12 +1,10 @@
 import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
-# add this import to the top of the file
-from urllib.parse import urlparse, parse_qs
 from views import get_all_animals, get_single_animal, create_animal, delete_animal
 from views import update_animal, get_all_employees, get_single_employee, create_employee
 from views import update_employee, delete_employee, get_all_locations, create_location, get_single_location
 from views import update_location, delete_location,  get_single_customer, get_all_customers, create_customer, update_customer
-from views import get_customers_by_email, get_animal_by_location, get_employee_by_location, get_animal_by_status
+from repository import all, retrieve
 
 # a dictionary to deal with single or all resources
 method_mapper = {
@@ -39,42 +37,22 @@ method_mapper = {
 class HandleRequests(BaseHTTPRequestHandler):
     '''handles the fetch methods'''
 
-    
-
-    # replace the parse_url function in the class
     def parse_url(self, path):
-        """Parse the url into the resource and id"""
-        parsed_url = urlparse(path)
-        path_params = parsed_url.path.split('/')  # ['', 'animals', 1]
+        '''splitting string. If the path is "/animals/1", the resulting list will have "" at index 0, "animals" at index 1, and "1" at index 2.'''
+
+        path_params = path.split("/")
         resource = path_params[1]
-
-        if parsed_url.query:
-            query = parse_qs(parsed_url.query)
-            return (resource, query)
-
-        pk = None
-        try:
-            pk = int(path_params[2])
-        except (IndexError, ValueError):
-            pass
-        return (resource, pk)
-
-   # def parse_url(self, path):
-    #    '''splitting string. If the path is "/animals/1", the resulting list will have "" at index 0, "animals" at index 1, and "1" at index 2.'''
-
-   #     path_params = path.split("/")
-   #     resource = path_params[1]
-   #     id = None
+        id = None
 
         # Try to get item at index 2
-   #     try:
-   #         id = int(path_params[2])
-   #     except IndexError:
-   #         pass
-   #     except ValueError:
-  #          pass
+        try:
+            id = int(path_params[2])
+        except IndexError:
+            pass
+        except ValueError:
+            pass
 
-  #      return (resource, id)
+        return (resource, id)
 
 
     def get_all_or_single(self, resource, id):
@@ -97,130 +75,73 @@ class HandleRequests(BaseHTTPRequestHandler):
     # Here's a class method
 
     def do_GET(self):
-        '''sql fetches'''
-        self._set_headers(200)
+        """Handles GET requests to the server"""
 
-        response = {}
-
-        # Parse URL and store entire tuple in a variable
-        parsed = self.parse_url(self.path)
-
-        # If the path does not include a query parameter, continue with the original if block
-        if '?' not in self.path:
-            ( resource, id ) = parsed
-
-            if resource == "animals":
-                if id is not None:
-                    response = get_single_animal(id)
-                else:
-                    response = get_all_animals()
-            elif resource == "customers":
-                if id is not None:
-                    response = get_single_customer(id)
-                else:
-                    response = get_all_customers()
-            elif resource == "employees":
-                if id is not None:
-                    response = get_single_employee(id)
-                else:
-                    response = get_all_employees()
-            elif resource == "locations":
-                if id is not None:
-                    response = get_single_location(id)
-                else:
-                    response = get_all_locations()
-
-        else: # There is a ? in the path, run the query param functions
-            (resource, query) = parsed
-
-            # see if the query dictionary has an email key
-            if query.get('email') and resource == 'customers':
-                response = get_customers_by_email(query['email'][0])
-            elif query.get('location_id') and resource == 'animals':
-                response = get_animal_by_location(query['location_id'][0])
-            elif query.get('location_id') and resource == 'employees':
-                response = get_employee_by_location(query['location_id'][0])
-            elif query.get('status') and resource == 'animals':
-                response = get_animal_by_status(query['status'][0])
-                
-            
-
-        self.wfile.write(json.dumps(response).encode())
-
-
-   # def do_GET(self):
-     #   """Handles GET requests to the server"""
-        
-
-        #response = {} #empty dictionary
-        #refractor dry code
-       # response = None
-      #  (resource, id) = self.parse_url(self.path)
-      #  response = self.get_all_or_single(resource, id)
-      #  self.wfile.write(json.dumps(response).encode())
+        response = {} #empty dictionary
 
         # Set the response code to 'Ok'
 
         # Parse the URL and capture the tuple that is returned
-       # (resource, id) = self.parse_url(self.path)
+        (resource, id) = self.parse_url(self.path)
 
-       # if resource == "animals":
-         #   if id is not None:
-        #        response = get_single_animal(id)
+        if resource == "animals":
+            if id is not None:
+                response = retrieve('animals', id)
 
-        #        if response is not None:
-        #            self._set_headers(200)
-        #        else:
-        #            self._set_headers(404)
-        #            response = {"message": "Oh no! Animal has escaped!"}
+                if response is not None:
+                    self._set_headers(200)
+                else:
+                    self._set_headers(404)
+                    response = {"message": "Oh no! Animal has escaped!"}
 
-        #    else:
-        #        self._set_headers(200)
-         #       response = get_all_animals()
+            else:
+                self._set_headers(200)
+                response = get_all_animals()
 
-       # elif resource == "locations":
-       #     if id is not None:
-       #         response = get_single_location(id)
+        elif resource == "locations":
+            if id is not None:
+                response = get_single_location(id)
 
-       #         if response is not None:
-       #             self._set_headers(200)
-        #        else:
-         #           self._set_headers(404)
-          #          response = {"message": "Use a valid address"}
-#
- #           else:
-  #              self._set_headers(200)
-   #             response = get_all_locations()
-#
- #       elif resource == "customers":
-  ##             response = get_single_customer(id)
-#
- #               if response is not None:
-  #                  self._set_headers(200)
-   #             else:
-    #                self._set_headers(404)
-     #               response = {"message": "This person does not exist."}
+                if response is not None:
+                    self._set_headers(200)
+                else:
+                    self._set_headers(404)
+                    response = {"message": "Use a valid address"}
 
-      #      else:
-       #         self._set_headers(200)
-        #        response = get_all_customers()
-#
- #       elif response == "employees":
-  #          if id is not None:
-   #             response = get_single_employee(id)
-#
- #               if response is not None:
-  #                  self._set_headers(200)
-   #             else:
-    #                self._set_headers(404)
-     #               response = {"message": "Oh no! This employee ran away"}
-#
- #           else:
-  #              self._set_headers(200)
-   #             response = get_all_employees()
-#
- #       # Send a JSON formatted string as a response
-  #      self.wfile.write(json.dumps(response).encode())
+            else:
+                self._set_headers(200)
+                response = get_all_locations()
+
+        elif resource == "customers":
+            if id is not None:
+                response = get_single_customer(id)
+
+                if response is not None:
+                    self._set_headers(200)
+                else:
+                    self._set_headers(404)
+                    response = {"message": "This person does not exist."}
+
+            else:
+                self._set_headers(200)
+                response = get_all_customers()
+
+        elif response == "employees":
+            if id is not None:
+                response = get_single_employee(id)
+
+                if response is not None:
+                    self._set_headers(200)
+                else:
+                    self._set_headers(404)
+                    response = {"message": "Oh no! This employee ran away"}
+
+            else:
+                self._set_headers(200)
+                response = get_all_employees()
+
+        # Send a JSON formatted string as a response
+        self.wfile.write(json.dumps(response).encode())
 
     # Here's a method on the class that overrides the parent's method.
     # handles any POST request.
@@ -272,53 +193,31 @@ class HandleRequests(BaseHTTPRequestHandler):
 
             self.wfile.write(json.dumps(new_employee).encode())
 
+    # A method that handles any PUT request.
     def do_PUT(self):
-        '''update'''
+        """Handles PUT requests to the server"""
+        self._set_headers(204)
         content_len = int(self.headers.get('content-length', 0))
         post_body = self.rfile.read(content_len)
         post_body = json.loads(post_body)
 
-    # Parse the URL
+        # Parse the URL
         (resource, id) = self.parse_url(self.path)
 
-        success = False
-
         if resource == "animals":
-            success = update_animal(id, post_body)
-        # rest of the elif's
+            update_animal(id, post_body)
 
-        if success:
-            self._set_headers(204)
-        else:
-            self._set_headers(404)
+        if resource == "customers":
+            update_customer(id, post_body)
 
-        self.wfile.write("".encode())
+        if resource == "employees":
+            update_employee(id, post_body)
 
-    # A method that handles any PUT request.
-   # def do_PUT(self):
-     #   """Handles PUT requests to the server"""
-      #  self._set_headers(204)
-      #  content_len = int(self.headers.get('content-length', 0))
-      #  post_body = self.rfile.read(content_len)
-      #  post_body = json.loads(post_body)
-
-        # Parse the URL
-      #  (resource, id) = self.parse_url(self.path)
-
-       # if resource == "animals":
-      #      update_animal(id, post_body)
-
-      #  if resource == "customers":
-      #      update_customer(id, post_body)
-
-      #  if resource == "employees":
-       #     update_employee(id, post_body)
-
-       # if resource == "locations":
-       #     update_location(id, post_body)
+        if resource == "locations":
+            update_location(id, post_body)
 
         # Encode the new animal and send in response
-       # self.wfile.write("".encode())
+        self.wfile.write("".encode())
 
     def _set_headers(self, status):
         # Notice this Docstring also includes information about the arguments passed to the function
