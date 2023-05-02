@@ -1,6 +1,7 @@
 import sqlite3
 import json
-from .models import Employee
+from .models import Employee, Location
+
 
 EMPLOYEES = [
     {
@@ -28,14 +29,18 @@ def get_all_employees():
         db_cursor = conn.cursor()
 
         # Write the SQL query to get the information you want
-        db_cursor.execute('''
+        db_cursor.execute("""
         SELECT
-            c.id,
-            c.name,
-            c.address,
-            c.location_id
-        FROM employee c
-        ''')
+            a.id,
+            a.name,
+            a.address,
+            a.location_id,
+            l.name location_name,
+            l.address location_address
+        FROM employee a
+        JOIN Location l
+            ON l.id = a.location_id
+        """)
 
         # Initialize an empty list to hold all animal representations
         employees = []
@@ -46,15 +51,19 @@ def get_all_employees():
         # Iterate list of data returned from database
         for row in dataset:
 
-            # Create an animal instance from the current row.
+            # Create an Employee instance from the current row.
             # Note that the database fields are specified in
             # exact order of the parameters defined in the
-            # Animal class above.
-            employee = Employee(row['id'], row['name'], row['address'], row['location_id'])
-
+            # Employee class above.
+            employee = Employee(row['id'], row['name'], row['address'],
+                            row['location_id'])
+            location = Location(row['id'], row['location_name'], row['location_address'])
+            employee.location = location.__dict__
             employees.append(employee.__dict__)
 
     return employees
+
+
 # Function with a single parameter
 def get_single_employee(id):
     '''single employee with sql'''

@@ -147,22 +147,24 @@ def get_single_animal(id):
 
         return animal.__dict__
 
-def create_animal(animal):
-    """create animal"""
+
+
+#def create_animal(animal):
+   # """create animal"""
     # Get the id value of the last animal in the list
-    max_id = ANIMALS[-1]["id"]
+ #   max_id = ANIMALS[-1]["id"]
 
     # Add 1 to whatever that number is
-    new_id = max_id + 1
+  #  new_id = max_id + 1
 
     # Add an `id` property to the animal dictionary
-    animal["id"] = new_id
+  #  animal["id"] = new_id
 
     # Add the animal dictionary to the list
-    ANIMALS.append(animal)
+   # ANIMALS.append(animal)
 
     # Return the dictionary with `id` property added
-    return animal
+  #  return animal
 
 #def delete_animal(id):
 #    """delete animal"""
@@ -250,6 +252,7 @@ def get_animal_by_location(location_id):
 
     return animals
 
+
 def get_animal_by_status(status):
     '''animal by status'''
     with sqlite3.connect("./kennel.sqlite3") as conn:
@@ -281,6 +284,33 @@ def get_animal_by_status(status):
 
     return animals
 
+def create_animal(new_animal):
+    '''sql create animal'''
+    with sqlite3.connect("./kennel.sqlite3") as conn:
+        db_cursor = conn.cursor()
+
+        db_cursor.execute("""
+        INSERT INTO Animal
+            ( name, breed, status, location_id, customer_id )
+        VALUES
+            ( ?, ?, ?, ?, ?);
+        """, (new_animal['name'], new_animal['breed'],
+              new_animal['status'], new_animal['location_id'],
+              new_animal['customer_id'], ))
+
+        # The `lastrowid` property on the cursor will return
+        # the primary key of the last thing that got added to
+        # the database.
+        id = db_cursor.lastrowid
+
+        # Add the `id` property to the animal dictionary that
+        # was sent by the client so that the client sees the
+        # primary key in the response.
+        new_animal['id'] = id
+    
+
+    return new_animal
+
 def delete_animal(id):
     '''delete animal'''
     with sqlite3.connect('./kennel.sqlite3') as conn:
@@ -305,3 +335,27 @@ def delete_animal(id):
         #self.customer_id = customer_id
     
 #new_animal = Animal(1, "Snickers", "Dog", "Recreation", 1, 4)
+#def create_order(order):
+   # '''create order'''
+   # max_id = ORDERS[-1]['id']
+   # new_id = max_id + 1
+   # order['id'] = new_id
+   # ORDERS.append(order)
+   # return order
+
+   #def delete_order(id):
+   # '''delete order'''
+   # order_index = -1
+
+   # for index, order in enumerate(ORDERS):
+   #     if order['id'] == id:
+      #      order_index = index
+   # if order_index >= 0:
+   #     ORDERS.pop(order_index)
+   #def update_order(id, new_order):
+   # '''update order'''
+
+   # for index, order in enumerate(ORDERS):
+   #     if order['id'] == id:
+   #         ORDERS[index] = new_order
+   #         break

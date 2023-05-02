@@ -71,3 +71,5 @@ SELECT
 FROM animal a
 WHERE a.id = 3
 
+
+SELECT * FROM Animal ORDER BY id DESC;

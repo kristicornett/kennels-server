@@ -2,7 +2,7 @@ import json
 from http.server import BaseHTTPRequestHandler, HTTPServer
 # add this import to the top of the file
 from urllib.parse import urlparse, parse_qs
-from views import get_all_animals, get_single_animal, create_animal, delete_animal
+from views import get_all_animals, get_single_animal, delete_animal, create_animal
 from views import update_animal, get_all_employees, get_single_employee, create_employee
 from views import update_employee, delete_employee, get_all_locations, create_location, get_single_location
 from views import update_location, delete_location,  get_single_customer, get_all_customers, create_customer, update_customer
@@ -241,13 +241,13 @@ class HandleRequests(BaseHTTPRequestHandler):
         new_customer = None
 
         if resource == "animals":
-            if "name" in post_body and "species" in post_body and "status" in post_body:
+            if "name" in post_body and "breed" in post_body and "status" in post_body:
                 self._set_headers(201)
                 created_resource = create_animal(post_body)
             else:
                 self._set_headers(400)
                 created_resource = {
-                    "message": f'{"please enter a name" if "name" not in post_body else ""}{"please enter species" if "species" not in post_body else ""}{"please enter status" if "status" not in post_body else ""}'
+                    "message": f'{"please enter a name" if "name" not in post_body else ""}{"please enter species" if "breed" not in post_body else ""}{"please enter status" if "status" not in post_body else ""}'
                 }
         # Encode the new animal and send in response
             self.wfile.write(json.dumps(created_resource).encode())
@@ -293,6 +293,8 @@ class HandleRequests(BaseHTTPRequestHandler):
             self._set_headers(404)
 
         self.wfile.write("".encode())
+
+    
 
     # A method that handles any PUT request.
    # def do_PUT(self):
